@@ -12,10 +12,12 @@ import java.awt.image.ImageObserver;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 
+import org.maia.graphics2d.image.ops.ImageBlendingOperation;
 import org.maia.util.ColorUtils;
 
 public class ImageUtils {
@@ -150,6 +152,25 @@ public class ImageUtils {
 					image.setRGB(x, y, ColorUtils.combineByTransparency(frontColor, backColor).getRGB());
 				}
 			}
+		}
+		return image;
+	}
+
+	public static BufferedImage blendInDecay(List<File> imageFiles, float decay) {
+		int n = imageFiles.size();
+		float[] weights = new float[n];
+		for (int i = 0; i < n; i++) {
+			weights[i] = n - decay * i;
+		}
+		return blendWeighted(imageFiles, weights);
+	}
+
+	public static BufferedImage blendWeighted(List<File> imageFiles, float[] weights) {
+		BufferedImage image = null;
+		try {
+			image = new ImageBlendingOperation(imageFiles, weights).apply();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 		return image;
 	}
