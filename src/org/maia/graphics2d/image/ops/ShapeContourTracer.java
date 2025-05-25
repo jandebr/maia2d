@@ -194,26 +194,10 @@ public class ShapeContourTracer {
 			return points;
 		}
 
-		/*
-		public List<Point3D> getContourPoints3D() {
-			List<Point3D> points = new Vector<Point3D>(getNumberOfPoints());
-			for (PixelCoords pc : getPoints()) {
-				points.add(new Point3D(pc.getX(), -pc.getY(), 0));
-			}
-			return points;
-		}
-		*/
-
 		public Polygon2D asPolygon2D() {
 			List<Point2D> vertices = getContourPoints2D();
 			return new Polygon2D(Polygon2D.deriveCentroid(vertices), vertices);
 		}
-
-		/*
-		public Path3D asPath3D() {
-			return Path3D.createFromPoints(getContourPoints3D());
-		}
-		*/
 
 		private void addPoint(PixelCoords point) {
 			getPoints().add(point);
