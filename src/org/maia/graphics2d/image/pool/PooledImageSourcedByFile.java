@@ -4,10 +4,9 @@ import java.awt.Image;
 import java.io.File;
 import java.io.IOException;
 
-import javax.imageio.ImageIO;
-
 import org.maia.graphics2d.image.ImageInfo;
 import org.maia.graphics2d.image.ImageInfoImpl;
+import org.maia.graphics2d.image.ImageUtils;
 
 public class PooledImageSourcedByFile extends AbstractPooledImage {
 
@@ -34,11 +33,13 @@ public class PooledImageSourcedByFile extends AbstractPooledImage {
 	}
 
 	private static String createImageIdentifierFor(File imageSourceFile) {
+		String path = "";
 		try {
-			return imageSourceFile.getCanonicalPath();
+			path = imageSourceFile.getCanonicalPath();
 		} catch (IOException e) {
-			return imageSourceFile.getAbsolutePath();
+			path = imageSourceFile.getAbsolutePath();
 		}
+		return "image.file[" + path + "]";
 	}
 
 	@Override
@@ -60,11 +61,7 @@ public class PooledImageSourcedByFile extends AbstractPooledImage {
 			Image image = null;
 			if (pooledImage instanceof PooledImageSourcedByFile) {
 				File file = ((PooledImageSourcedByFile) pooledImage).getImageSourceFile();
-				try {
-					image = ImageIO.read(file);
-				} catch (Exception e) {
-					System.err.println("Failed loading image from file '" + file.getPath() + "' " + e.getMessage());
-				}
+				image = ImageUtils.readFromFile(file);
 			}
 			return image;
 		}

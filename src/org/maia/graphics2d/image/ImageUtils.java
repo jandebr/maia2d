@@ -48,11 +48,15 @@ public class ImageUtils {
 	}
 
 	public static BufferedImage readFromFile(String filePath) {
+		return readFromFile(new File(filePath));
+	}
+
+	public static BufferedImage readFromFile(File file) {
 		BufferedImage image = null;
 		try {
-			image = ImageIO.read(new File(filePath));
+			image = ImageIO.read(file);
 		} catch (IOException e) {
-			System.err.println("Failed to read image from file path '" + filePath + "'");
+			System.err.println("Failed to read image from file '" + file.getPath() + "'");
 		}
 		return image;
 	}
