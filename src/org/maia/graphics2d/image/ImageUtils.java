@@ -39,7 +39,9 @@ public class ImageUtils {
 
 	public static BufferedImage createImage(int width, int height, Color color) {
 		BufferedImage image = createImage(width, height);
-		clearWithUniformColor(image, color);
+		if (color != null) {
+			clearWithUniformColor(image, color);
+		}
 		return image;
 	}
 

@@ -36,37 +36,44 @@ public abstract class AbstractPooledImage implements PooledImage {
 	@Override
 	public synchronized Image getImage() {
 		Image image = probeImage();
-		if (image == null) {
+		if (image == null && !getImagePool().isVoidImage(getImageIdentifier())) {
 			image = produceImage();
 		}
 		return image;
 	}
 
 	@Override
-	public Image probeImage() {
-		return getImagePool().fetchFromCache(getImageIdentifier());
-	}
-
-	@Override
-	public Image requestImage() {
+	public synchronized Image requestImage() {
 		Image image = probeImage();
-		if (image == null) {
+		if (image == null && !getImagePool().isVoidImage(getImageIdentifier())) {
 			imageProductionTaskWorker.addTask(new ImageProductionTask());
 		}
 		return image;
 	}
 
+	@Override
+	public synchronized Image probeImage() {
+		return getImagePool().fetchImage(getImageIdentifier());
+	}
+
 	private Image produceImage() {
-		Image image = getImageProducer().produceImage(this);
-		if (image != null) {
-			getImagePool().storeInCache(getImageIdentifier(), image);
+		Image image = null;
+		try {
+			image = getImageProducer().produceImage(this);
+			if (image != null) {
+				getImagePool().storeImage(getImageIdentifier(), image);
+			} else {
+				getImagePool().addVoidImage(getImageIdentifier());
+			}
+		} catch (RetryablePooledImageProducerException e) {
+			// not add as void, so it can be retried
 		}
 		return image;
 	}
 
 	@Override
 	public void disposeImage() {
-		getImagePool().removeFromCache(getImageIdentifier());
+		getImagePool().removeImage(getImageIdentifier());
 	}
 
 	@Override
