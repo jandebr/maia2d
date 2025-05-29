@@ -1,5 +1,6 @@
 package org.maia.graphics2d.image.pool;
 
+@SuppressWarnings("serial")
 public class RetryablePooledImageProducerException extends Exception {
 
 	public RetryablePooledImageProducerException() {
