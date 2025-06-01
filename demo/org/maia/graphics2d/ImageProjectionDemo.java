@@ -2,11 +2,14 @@ package org.maia.graphics2d;
 
 import java.awt.Point;
 import java.awt.image.BufferedImage;
+import java.util.List;
+import java.util.Vector;
 
+import org.maia.graphics2d.geometry.ApproximatingCurve2D;
+import org.maia.graphics2d.geometry.Curve2D;
+import org.maia.graphics2d.geometry.Point2D;
 import org.maia.graphics2d.image.ImageUtils;
 import org.maia.graphics2d.image.ops.BandedImageDeformation;
-import org.maia.graphics2d.image.ops.BandedImageDeformation.ConstantHorizontalImageBand;
-import org.maia.graphics2d.image.ops.BandedImageDeformation.ConstantVerticalImageBand;
 import org.maia.graphics2d.image.ops.BandedImageDeformation.HorizontalImageBand;
 import org.maia.graphics2d.image.ops.BandedImageDeformation.VerticalImageBand;
 import org.maia.graphics2d.image.ops.QuadrilateralImageProjection;
@@ -20,41 +23,57 @@ public class ImageProjectionDemo {
 	}
 
 	private void startDemo() {
-		BufferedImage sourceImage = ImageUtils.readFromFile("demo-resources/zootropolis.png");
-		// projectQuadrilateral(sourceImage);
-		projectWithHorizontalDeformation(sourceImage);
-		projectWithVerticalDeformation(sourceImage);
+		String name = "zootropolis";
+		BufferedImage sourceImage = ImageUtils.readFromFile("demo-resources/" + name + ".png");
+		ImageUtils.writeToFile(projectQuadrilateral(sourceImage), "demo-resources/" + name + "-quadrilateral.png");
+		ImageUtils.writeToFile(projectWithHorizontalDeformation(sourceImage),
+				"demo-resources/" + name + "-deformation-hor.png");
+		ImageUtils.writeToFile(projectWithVerticalDeformation(sourceImage),
+				"demo-resources/" + name + "-deformation-ver.png");
+		ImageUtils.writeToFile(projectWithVerticalDeformation(projectWithHorizontalDeformation(sourceImage)),
+				"demo-resources/" + name + "-deformation.png");
 	}
 
-	private void projectQuadrilateral(BufferedImage sourceImage) {
+	private BufferedImage projectQuadrilateral(BufferedImage sourceImage) {
 		Point p1 = new Point(88, 61);
 		Point p2 = new Point(247, 15);
 		Point p3 = new Point(256, 345);
 		Point p4 = new Point(75, 293);
 		Quadrilateral targetArea = new Quadrilateral(p1, p2, p3, p4);
 		QuadrilateralImageProjection projection = new QuadrilateralImageProjection();
-		BufferedImage targetImage = projection.project(sourceImage, targetArea, new PseudoPerspective(0.5f, 0f));
-		ImageUtils.writeToFile(targetImage, "demo-resources/zootropolis-quadrilateral.png");
+		return projection.project(sourceImage, targetArea, new PseudoPerspective(0.5f, 0f));
 	}
 
-	private void projectWithHorizontalDeformation(BufferedImage sourceImage) {
+	private BufferedImage projectWithHorizontalDeformation(BufferedImage sourceImage) {
+		int n = 10;
+		int width = ImageUtils.getWidth(sourceImage);
+		int height = ImageUtils.getHeight(sourceImage);
+		List<Point2D> controlPoints = new Vector<Point2D>(n);
+		for (int i = 0; i < n; i++) {
+			float x = (0.2f + 0.6f * (float) Math.random()) * width;
+			float y = i / (n - 1f) * height;
+			controlPoints.add(new Point2D(x, y));
+		}
+		Curve2D separator = ApproximatingCurve2D.createStandardCurve(controlPoints);
 		BandedImageDeformation<VerticalImageBand> deformation = BandedImageDeformation
-				.createVerticalBandedImageDeformation();
-		deformation.addBand(new ConstantVerticalImageBand(100, 150f));
-		deformation.addBand(new ConstantVerticalImageBand(200, 100f));
-		deformation.addBand(new ConstantVerticalImageBand(100, 150f));
-		BufferedImage targetImage = deformation.deform(sourceImage);
-		ImageUtils.writeToFile(targetImage, "demo-resources/zootropolis-deformation-hor.png");
+				.createCurvedVerticalBandedImageDeformation(width, 0.5f, separator);
+		return deformation.deform(sourceImage);
 	}
 
-	private void projectWithVerticalDeformation(BufferedImage sourceImage) {
+	private BufferedImage projectWithVerticalDeformation(BufferedImage sourceImage) {
+		int n = 10;
+		int width = ImageUtils.getWidth(sourceImage);
+		int height = ImageUtils.getHeight(sourceImage);
+		List<Point2D> controlPoints = new Vector<Point2D>(n);
+		for (int i = 0; i < n; i++) {
+			float x = i / (n - 1f) * width;
+			float y = (0.2f + 0.6f * (float) Math.random()) * height;
+			controlPoints.add(new Point2D(x, y));
+		}
+		Curve2D separator = ApproximatingCurve2D.createStandardCurve(controlPoints);
 		BandedImageDeformation<HorizontalImageBand> deformation = BandedImageDeformation
-				.createHorizontalBandedImageDeformation();
-		deformation.addBand(new ConstantHorizontalImageBand(100, 150f));
-		deformation.addBand(new ConstantHorizontalImageBand(200, 100f));
-		deformation.addBand(new ConstantHorizontalImageBand(100, 150f));
-		BufferedImage targetImage = deformation.deform(sourceImage);
-		ImageUtils.writeToFile(targetImage, "demo-resources/zootropolis-deformation-ver.png");
+				.createCurvedHorizontalBandedImageDeformation(height, 0.5f, separator);
+		return deformation.deform(sourceImage);
 	}
 
 }
