@@ -19,7 +19,7 @@ public class Polygon2D {
 
 	private List<Point2D> vertices;
 
-	private List<LineSegment2D> edges;
+	private List<ClosedLineSegment2D> edges;
 
 	private Point2D insidePoint;
 
@@ -35,8 +35,8 @@ public class Polygon2D {
 	}
 
 	public boolean contains(Point2D point) {
-		LineSegment2D line = new LineSegment2D(point, getInsidePoint());
-		for (LineSegment2D edge : getEdges()) {
+		ClosedLineSegment2D line = new ClosedLineSegment2D(point, getInsidePoint());
+		for (ClosedLineSegment2D edge : getEdges()) {
 			Point2D p = line.intersect(edge);
 			if (p != null && !p.equals(point))
 				return false;
@@ -44,20 +44,20 @@ public class Polygon2D {
 		return true;
 	}
 
-	public List<LineSegment2D> getEdges() {
+	public List<ClosedLineSegment2D> getEdges() {
 		if (edges == null) {
 			edges = deriveEdges();
 		}
 		return edges;
 	}
 
-	private List<LineSegment2D> deriveEdges() {
+	private List<ClosedLineSegment2D> deriveEdges() {
 		List<Point2D> vertices = getVertices();
 		int n = vertices.size();
-		List<LineSegment2D> edges = new Vector<LineSegment2D>(n);
+		List<ClosedLineSegment2D> edges = new Vector<ClosedLineSegment2D>(n);
 		for (int i = 0; i < n; i++) {
 			int j = (i + 1) % n;
-			edges.add(new LineSegment2D(vertices.get(i), vertices.get(j)));
+			edges.add(new ClosedLineSegment2D(vertices.get(i), vertices.get(j)));
 		}
 		return edges;
 	}

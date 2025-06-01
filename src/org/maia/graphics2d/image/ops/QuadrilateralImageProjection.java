@@ -12,6 +12,7 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.Objects;
 
+import org.maia.graphics2d.image.ImageSampler;
 import org.maia.graphics2d.image.ImageUtils;
 
 public class QuadrilateralImageProjection {
@@ -65,7 +66,7 @@ public class QuadrilateralImageProjection {
 				edgeSmoothingMask = new EdgeSmoothingMask(targetImageSize, targetArea);
 			}
 		}
-		SubSamplingState subSamplingState = isSubSampling() ? new SubSamplingState() : null;
+		ImageSampler imageSampler = isSubSampling() ? ImageSampler.createDefaultImageSampler() : null;
 		ComputeState computeState = null;
 		boolean reuseProjectionState = false;
 		ProjectionState projectionState = null;
@@ -110,10 +111,10 @@ public class QuadrilateralImageProjection {
 					float sx = 0.5f + srx * sw;
 					float sy = 0.5f + sry * sh;
 					int argb = 0;
-					if (subSamplingState == null) {
+					if (imageSampler == null) {
 						argb = sourceImage.getRGB((int) Math.floor(sx), (int) Math.floor(sy));
 					} else {
-						argb = subSamplingState.subSample(sourceImage, sx, sy);
+						argb = imageSampler.sampleRGB(sourceImage, sx, sy);
 					}
 					if (edgeSmoothingMask != null) {
 						int alpha = edgeSmoothingMask.getMaskValue(tx, ty);
@@ -454,77 +455,6 @@ public class QuadrilateralImageProjection {
 					exponent = 1f / exponent;
 			}
 			return exponent;
-		}
-
-	}
-
-	private static class SubSamplingState {
-
-		private int cx, cy;
-
-		private int minDx, maxDx;
-
-		private int minDy, maxDy;
-
-		private float cWeightX, cWeightY;
-
-		public SubSamplingState() {
-		}
-
-		public int subSample(BufferedImage sourceImage, float sx, float sy) {
-			update(sx, sy);
-			float alpha = 0f;
-			float red = 0f;
-			float green = 0f;
-			float blue = 0f;
-			for (int dy = minDy; dy <= maxDy; dy++) {
-				int y = cy + dy;
-				float wy = dy == 0 ? cWeightY : 1f - cWeightY;
-				for (int dx = minDx; dx <= maxDx; dx++) {
-					int x = cx + dx;
-					int argb = sourceImage.getRGB(x, y);
-					float wx = dx == 0 ? cWeightX : 1f - cWeightX;
-					float w = wy * wx;
-					alpha += w * ((argb & 0xff000000) >>> 24);
-					red += w * ((argb & 0x00ff0000) >>> 16);
-					green += w * ((argb & 0x0000ff00) >>> 8);
-					blue += w * (argb & 0x000000ff);
-				}
-			}
-			int alphaInt = Math.min(Math.round(alpha), 255);
-			int redInt = Math.min(Math.round(red), 255);
-			int greenInt = Math.min(Math.round(green), 255);
-			int blueInt = Math.min(Math.round(blue), 255);
-			return (alphaInt << 24) | (redInt << 16) | (greenInt << 8) | blueInt;
-		}
-
-		private void update(float sx, float sy) {
-			this.cx = (int) Math.floor(sx);
-			this.cy = (int) Math.floor(sy);
-			float dx = sx - cx - 0.5f;
-			if (dx < 0f) {
-				this.minDx = -1;
-				this.maxDx = 0;
-			} else if (dx > 0f) {
-				this.minDx = 0;
-				this.maxDx = 1;
-			} else {
-				this.minDx = 0;
-				this.maxDx = 0;
-			}
-			float dy = sy - cy - 0.5f;
-			if (dy < 0f) {
-				this.minDy = -1;
-				this.maxDy = 0;
-			} else if (dy > 0f) {
-				this.minDy = 0;
-				this.maxDy = 1;
-			} else {
-				this.minDy = 0;
-				this.maxDy = 0;
-			}
-			this.cWeightX = 1f - Math.abs(dx);
-			this.cWeightY = 1f - Math.abs(dy);
 		}
 
 	}

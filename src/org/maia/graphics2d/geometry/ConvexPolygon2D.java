@@ -70,7 +70,7 @@ public class ConvexPolygon2D extends Polygon2D {
 			return VerticesOrder.COLLINEAR;
 	}
 
-	private LineSegment2D getCollinearLineSegment() {
+	private ClosedLineSegment2D getCollinearLineSegment() {
 		Point2D p0 = getVertices().get(0);
 		Point2D p1 = getVertices().get(1);
 		Point2D p = null;
@@ -96,7 +96,7 @@ public class ConvexPolygon2D extends Polygon2D {
 				}
 			}
 		}
-		return new LineSegment2D(p0, p1);
+		return new ClosedLineSegment2D(p0, p1);
 	}
 
 	private static enum VerticesOrder {

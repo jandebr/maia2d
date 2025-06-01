@@ -71,6 +71,38 @@ public class Line2D {
 		return result;
 	}
 
+	public Point2D intersectAtX(double x) {
+		Point2D result = null;
+		double p1x = getP1().getX();
+		double pdx = getP2().getX() - p1x;
+		if (pdx != 0) {
+			double r = (x - p1x) / pdx;
+			if (containsPointAtRelativePosition(r)) {
+				double p1y = getP1().getY();
+				double pdy = getP2().getY() - p1y;
+				double y = p1y + r * pdy;
+				result = new Point2D(x, y);
+			}
+		}
+		return result;
+	}
+
+	public Point2D intersectAtY(double y) {
+		Point2D result = null;
+		double p1y = getP1().getY();
+		double pdy = getP2().getY() - p1y;
+		if (pdy != 0) {
+			double r = (y - p1y) / pdy;
+			if (containsPointAtRelativePosition(r)) {
+				double p1x = getP1().getX();
+				double pdx = getP2().getX() - p1x;
+				double x = p1x + r * pdx;
+				result = new Point2D(x, y);
+			}
+		}
+		return result;
+	}
+
 	protected boolean containsPointAtRelativePosition(double r) {
 		return true; // open ended line, subclasses may override this
 	}
