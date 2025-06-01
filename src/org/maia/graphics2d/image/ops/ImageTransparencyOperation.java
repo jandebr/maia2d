@@ -10,9 +10,9 @@ public class ImageTransparencyOperation {
 
 	private BufferedImage sourceImage;
 
-	private double transparencyMultiplier;
+	private float transparencyMultiplier;
 
-	public ImageTransparencyOperation(BufferedImage sourceImage, double transparencyMultiplier) {
+	public ImageTransparencyOperation(BufferedImage sourceImage, float transparencyMultiplier) {
 		this.sourceImage = sourceImage;
 		this.transparencyMultiplier = transparencyMultiplier;
 	}
@@ -25,8 +25,8 @@ public class ImageTransparencyOperation {
 		for (int y = 0; y < height; y++) {
 			for (int x = 0; x < width; x++) {
 				Color color = new Color(source.getRGB(x, y), true);
-				double transparency = ColorUtils.getTransparency(color);
-				transparency = 1.0 - (1.0 - transparency) * (1.0 - getTransparencyMultiplier());
+				float transparency = ColorUtils.getTransparency(color);
+				transparency = 1f - (1f - transparency) * (1f - getTransparencyMultiplier());
 				Color newColor = ColorUtils.setTransparency(color, transparency);
 				image.setRGB(x, y, newColor.getRGB());
 			}
@@ -38,7 +38,7 @@ public class ImageTransparencyOperation {
 		return sourceImage;
 	}
 
-	private double getTransparencyMultiplier() {
+	private float getTransparencyMultiplier() {
 		return transparencyMultiplier;
 	}
 

@@ -15,9 +15,9 @@ public class GradientImageFactory {
 	public static BufferedImage createLeftToRightGradientImage(Dimension size, Color startColor, Color endColor,
 			GradientFunction function) {
 		BufferedImage image = ImageUtils.createImage(size);
-		double dx = 1.0 / (size.width - 1);
+		float dx = 1f / (size.width - 1);
 		for (int x = 0; x < size.width; x++) {
-			double r = x * dx;
+			float r = x * dx;
 			Color c = ColorUtils.interpolate(startColor, endColor, function.eval(r));
 			ImageUtils.clearWithUniformColor(image, c, x, 0, 1, size.height);
 		}
@@ -27,9 +27,9 @@ public class GradientImageFactory {
 	public static BufferedImage createRightToLeftGradientImage(Dimension size, Color startColor, Color endColor,
 			GradientFunction function) {
 		BufferedImage image = ImageUtils.createImage(size);
-		double dx = 1.0 / (size.width - 1);
+		float dx = 1f / (size.width - 1);
 		for (int x = 0; x < size.width; x++) {
-			double r = x * dx;
+			float r = x * dx;
 			Color c = ColorUtils.interpolate(startColor, endColor, function.eval(r));
 			ImageUtils.clearWithUniformColor(image, c, size.width - 1 - x, 0, 1, size.height);
 		}
@@ -39,9 +39,9 @@ public class GradientImageFactory {
 	public static BufferedImage createTopToBottomGradientImage(Dimension size, Color startColor, Color endColor,
 			GradientFunction function) {
 		BufferedImage image = ImageUtils.createImage(size);
-		double dy = 1.0 / (size.height - 1);
+		float dy = 1f / (size.height - 1);
 		for (int y = 0; y < size.height; y++) {
-			double r = y * dy;
+			float r = y * dy;
 			Color c = ColorUtils.interpolate(startColor, endColor, function.eval(r));
 			ImageUtils.clearWithUniformColor(image, c, 0, y, size.width, 1);
 		}
@@ -51,9 +51,9 @@ public class GradientImageFactory {
 	public static BufferedImage createBottomToTopGradientImage(Dimension size, Color startColor, Color endColor,
 			GradientFunction function) {
 		BufferedImage image = ImageUtils.createImage(size);
-		double dy = 1.0 / (size.height - 1);
+		float dy = 1f / (size.height - 1);
 		for (int y = 0; y < size.height; y++) {
-			double r = y * dy;
+			float r = y * dy;
 			Color c = ColorUtils.interpolate(startColor, endColor, function.eval(r));
 			ImageUtils.clearWithUniformColor(image, c, 0, size.height - 1 - y, size.width, 1);
 		}
@@ -66,14 +66,14 @@ public class GradientImageFactory {
 
 	public static BufferedImage createGradientBorderImage(Dimension size, Color borderColor, int borderThickness,
 			GradientFunction function) {
-		return createGradientBorderImage(size, borderColor, ColorUtils.setTransparency(borderColor, 1.0),
+		return createGradientBorderImage(size, borderColor, ColorUtils.setTransparency(borderColor, 1f),
 				borderThickness, function);
 	}
 
 	public static BufferedImage createGradientBorderImage(Dimension size, Color outsideColor, Color insideColor,
 			int borderThickness, GradientFunction function) {
 		int w = size.width, h = size.height, t = borderThickness;
-		Color c1 = outsideColor, c2 = insideColor, c3 = ColorUtils.setTransparency(c2, 1.0);
+		Color c1 = outsideColor, c2 = insideColor, c3 = ColorUtils.setTransparency(c2, 1f);
 		BufferedImage left = ImageUtils.addPadding(
 				GradientImageFactory.createLeftToRightGradientImage(new Dimension(t, h), c1, c2, function),
 				new Insets(0, 0, 0, w - t), c3);
@@ -94,7 +94,7 @@ public class GradientImageFactory {
 		return new LinearGradientFunction();
 	}
 
-	public static GradientFunction createPolynomialGradientFunction(double exponent) {
+	public static GradientFunction createPolynomialGradientFunction(float exponent) {
 		return new PolynomialGradientFunction(exponent);
 	}
 
@@ -125,7 +125,7 @@ public class GradientImageFactory {
 
 	public static interface GradientFunction {
 
-		double eval(double r);
+		float eval(float r);
 
 	}
 
@@ -135,7 +135,7 @@ public class GradientImageFactory {
 		}
 
 		@Override
-		public double eval(double r) {
+		public float eval(float r) {
 			return r;
 		}
 
@@ -143,23 +143,23 @@ public class GradientImageFactory {
 
 	private static class PolynomialGradientFunction implements GradientFunction {
 
-		private double exponent;
+		private float exponent;
 
-		public PolynomialGradientFunction(double exponent) {
+		public PolynomialGradientFunction(float exponent) {
 			this.exponent = exponent;
 		}
 
 		@Override
-		public double eval(double r) {
-			double e = getExponent();
+		public float eval(float r) {
+			float e = getExponent();
 			if (e >= 0) {
-				return Math.pow(r, e);
+				return (float) Math.pow(r, e);
 			} else {
-				return 1.0 - Math.pow(1.0 - r, -e);
+				return 1f - (float) Math.pow(1.0 - r, -e);
 			}
 		}
 
-		private double getExponent() {
+		private float getExponent() {
 			return exponent;
 		}
 
@@ -174,8 +174,8 @@ public class GradientImageFactory {
 		}
 
 		@Override
-		public double eval(double r) {
-			return Math.max(Math.min(getFunction().eval(r), 1.0), 0);
+		public float eval(float r) {
+			return Math.max(Math.min((float) getFunction().eval(r), 1f), 0);
 		}
 
 		private SigmoidFunction getFunction() {
