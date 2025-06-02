@@ -3,6 +3,8 @@ package org.maia.graphics2d.geometry;
 import java.util.List;
 import java.util.Vector;
 
+import org.maia.graphics2d.transform.TransformMatrix2D;
+
 /**
  * A curve in 2D that approximates (approaches, not necessarily interpolates) a sequence of control points
  *
@@ -82,6 +84,15 @@ public class ApproximatingCurve2D extends AbstractCurve2D implements Cloneable {
 			y += w * cp.getY();
 		}
 		return new Point2D(x, y);
+	}
+
+	@Override
+	public Curve2D transform(TransformMatrix2D matrix) {
+		if (!matrix.isAffine())
+			throw new UnsupportedOperationException("This curve only supports affine transformations");
+		ApproximatingCurve2D tCurve = clone();
+		tCurve.setControlPoints(matrix.transform(getControlPoints()));
+		return tCurve;
 	}
 
 	private double projectT(double t) {

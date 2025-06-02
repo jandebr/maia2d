@@ -1,5 +1,7 @@
 package org.maia.graphics2d.geometry;
 
+import org.maia.graphics2d.transform.TransformMatrix2D;
+
 public interface Curve2D {
 
 	/**
@@ -23,5 +25,16 @@ public interface Curve2D {
 	 * @see #sample(double)
 	 */
 	PolyLine2D toPolyLine(int vertexCount);
+
+	/**
+	 * Transforms this curve into another curve
+	 * 
+	 * @param matrix
+	 *            The transformation matrix
+	 * @return The transformed curve
+	 * @throws UnsupportedOperationException
+	 *             If this curve does not support transformations
+	 */
+	Curve2D transform(TransformMatrix2D matrix);
 
 }

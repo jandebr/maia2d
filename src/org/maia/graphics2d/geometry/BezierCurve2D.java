@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.maia.graphics2d.transform.TransformMatrix2D;
+
 /**
  * Standard Bézier curve defined by a sequence of two or more control points
  * 
@@ -45,6 +47,13 @@ public class BezierCurve2D extends AbstractCurve2D {
 			y += w * cp.getY();
 		}
 		return new Point2D(x, y);
+	}
+
+	@Override
+	public Curve2D transform(TransformMatrix2D matrix) {
+		if (!matrix.isAffine())
+			throw new UnsupportedOperationException("This curve only supports affine transformations");
+		return new BezierCurve2D(matrix.transform(getControlPoints()));
 	}
 
 	private static void checkParameters(List<Point2D> controlPoints) {
