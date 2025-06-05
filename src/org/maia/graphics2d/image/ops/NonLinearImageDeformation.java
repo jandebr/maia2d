@@ -36,14 +36,26 @@ public class NonLinearImageDeformation {
 		ImageSampler imageSampler = ImageSampler.createDefaultImageSampler();
 		HorizontalCoordinateProjection projectionX = getHorizontalProjection();
 		VerticalCoordinateProjection projectionY = getVerticalProjection();
-		for (int yi = 0; yi < height; yi++) {
-			float yc = 0.5f + yi;
+		if (projectionX != null) {
+			for (int yi = 0; yi < height; yi++) {
+				float yc = 0.5f + yi;
+				for (int xi = 0; xi < width; xi++) {
+					float xc = 0.5f + xi;
+					float pxc = projectionX.projectX(xc, yc, width, height);
+					float pyc = projectionY == null ? yc : projectionY.projectY(xc, yc, width, height);
+					int argb = imageSampler.sampleRGB(sourceImage, pxc, pyc);
+					targetImage.setRGB(xi, yi, argb);
+				}
+			}
+		} else {
 			for (int xi = 0; xi < width; xi++) {
 				float xc = 0.5f + xi;
-				float pxc = projectionX == null ? xc : projectionX.projectX(xc, yc, width, height);
-				float pyc = projectionY == null ? yc : projectionY.projectY(xc, yc, width, height);
-				int argb = imageSampler.sampleRGB(sourceImage, pxc, pyc);
-				targetImage.setRGB(xi, yi, argb);
+				for (int yi = 0; yi < height; yi++) {
+					float yc = 0.5f + yi;
+					float pyc = projectionY == null ? yc : projectionY.projectY(xc, yc, width, height);
+					int argb = imageSampler.sampleRGB(sourceImage, xc, pyc);
+					targetImage.setRGB(xi, yi, argb);
+				}
 			}
 		}
 		return targetImage;
