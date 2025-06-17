@@ -213,14 +213,14 @@ public abstract class BandedImageDeformation<E extends ImageBand> extends NonLin
 				xLeft = previousXleft;
 				xRight = previousXright;
 			} else {
-				PolyLine2D leftEdgeSeq = getLeftEdgeSequenced(height + 1);
+				PolyLine2D leftEdgeSeq = getLeftEdgeSequenced(height);
 				if (leftEdgeSeq != null) {
 					Point2D p = leftEdgeSeq.intersectAtY(y);
 					if (p != null) {
 						xLeft = (float) p.getX();
 					}
 				}
-				PolyLine2D rightEdgeSeq = getRightEdgeSequenced(height + 1);
+				PolyLine2D rightEdgeSeq = getRightEdgeSequenced(height);
 				if (rightEdgeSeq != null) {
 					Point2D p = rightEdgeSeq.intersectAtY(y);
 					if (p != null) {
@@ -234,18 +234,22 @@ public abstract class BandedImageDeformation<E extends ImageBand> extends NonLin
 			return Math.max(xRight - xLeft, 1f);
 		}
 
-		private PolyLine2D getLeftEdgeSequenced(int vertexCount) {
+		private PolyLine2D getLeftEdgeSequenced(int height) {
 			if (leftEdgeSequenced == null && getLeftEdge() != null) {
-				leftEdgeSequenced = getLeftEdge().toPolyLine(vertexCount);
+				leftEdgeSequenced = getLeftEdge().toPolyLine(getSequencedEdgeVertexCount(height));
 			}
 			return leftEdgeSequenced;
 		}
 
-		private PolyLine2D getRightEdgeSequenced(int vertexCount) {
+		private PolyLine2D getRightEdgeSequenced(int height) {
 			if (rightEdgeSequenced == null && getRightEdge() != null) {
-				rightEdgeSequenced = getRightEdge().toPolyLine(vertexCount);
+				rightEdgeSequenced = getRightEdge().toPolyLine(getSequencedEdgeVertexCount(height));
 			}
 			return rightEdgeSequenced;
+		}
+
+		private int getSequencedEdgeVertexCount(int height) {
+			return 2 + height / 2;
 		}
 
 		public Curve2D getLeftEdge() {
@@ -317,14 +321,14 @@ public abstract class BandedImageDeformation<E extends ImageBand> extends NonLin
 				yTop = previousYtop;
 				yBottom = previousYbottom;
 			} else {
-				PolyLine2D topEdgeSeq = getTopEdgeSequenced(width + 1);
+				PolyLine2D topEdgeSeq = getTopEdgeSequenced(width);
 				if (topEdgeSeq != null) {
 					Point2D p = topEdgeSeq.intersectAtX(x);
 					if (p != null) {
 						yTop = (float) p.getY();
 					}
 				}
-				PolyLine2D bottomEdgeSeq = getBottomEdgeSequenced(width + 1);
+				PolyLine2D bottomEdgeSeq = getBottomEdgeSequenced(width);
 				if (bottomEdgeSeq != null) {
 					Point2D p = bottomEdgeSeq.intersectAtX(x);
 					if (p != null) {
@@ -338,18 +342,22 @@ public abstract class BandedImageDeformation<E extends ImageBand> extends NonLin
 			return Math.max(yBottom - yTop, 1f);
 		}
 
-		private PolyLine2D getTopEdgeSequenced(int vertexCount) {
+		private PolyLine2D getTopEdgeSequenced(int width) {
 			if (topEdgeSequenced == null && getTopEdge() != null) {
-				topEdgeSequenced = getTopEdge().toPolyLine(vertexCount);
+				topEdgeSequenced = getTopEdge().toPolyLine(getSequencedEdgeVertexCount(width));
 			}
 			return topEdgeSequenced;
 		}
 
-		private PolyLine2D getBottomEdgeSequenced(int vertexCount) {
+		private PolyLine2D getBottomEdgeSequenced(int width) {
 			if (bottomEdgeSequenced == null && getBottomEdge() != null) {
-				bottomEdgeSequenced = getBottomEdge().toPolyLine(vertexCount);
+				bottomEdgeSequenced = getBottomEdge().toPolyLine(getSequencedEdgeVertexCount(width));
 			}
 			return bottomEdgeSequenced;
+		}
+
+		private int getSequencedEdgeVertexCount(int width) {
+			return 2 + width / 2;
 		}
 
 		public Curve2D getTopEdge() {

@@ -5,29 +5,48 @@ import java.awt.image.BufferedImage;
 
 public abstract class ImageSampler {
 
-	protected ImageSampler() {
+	private BufferedImage image;
+
+	private int imageWidth;
+
+	private int imageHeight;
+
+	protected ImageSampler(BufferedImage image) {
+		this.image = image;
+		this.imageWidth = ImageUtils.getWidth(image);
+		this.imageHeight = ImageUtils.getHeight(image);
 	}
 
 	/**
-	 * Samples an image at the specified coordinates. The coordinates need not to coincide with the center of a single
+	 * Samples the image at the specified coordinates. The coordinates need not to coincide with the center of a single
 	 * pixel
 	 * 
-	 * @param image
-	 *            The image
 	 * @param sx
 	 *            The x coordinate, in the range [0.5f, image width - 0.5f]
 	 * @param sy
 	 *            The y coordinate, in the range [0.5f, image height - 0.5f]
 	 * @return The image sample, packed as an integer in the ARGB color model
 	 */
-	public abstract int sampleRGB(BufferedImage image, float sx, float sy);
+	public abstract int sampleRGB(float sx, float sy);
 
-	public Color sampleColor(BufferedImage image, float sx, float sy) {
-		return new Color(sampleRGB(image, sx, sy), true);
+	public Color sampleColor(float sx, float sy) {
+		return new Color(sampleRGB(sx, sy), true);
 	}
 
-	public static ImageSampler createDefaultImageSampler() {
-		return new InterpolatingImageSampler();
+	public static ImageSampler createDefaultImageSampler(BufferedImage image) {
+		return new InterpolatingImageSampler(image);
+	}
+
+	public BufferedImage getImage() {
+		return image;
+	}
+
+	protected int getImageWidth() {
+		return imageWidth;
+	}
+
+	protected int getImageHeight() {
+		return imageHeight;
 	}
 
 	private static class InterpolatingImageSampler extends ImageSampler {
@@ -40,22 +59,25 @@ public abstract class ImageSampler {
 
 		private float cWeightX, cWeightY;
 
-		public InterpolatingImageSampler() {
+		public InterpolatingImageSampler(BufferedImage image) {
+			super(image);
 		}
 
 		@Override
-		public int sampleRGB(BufferedImage image, float sx, float sy) {
+		public int sampleRGB(float sx, float sy) {
 			update(sx, sy);
+			int width = getImageWidth();
+			int height = getImageHeight();
 			float alpha = 0f;
 			float red = 0f;
 			float green = 0f;
 			float blue = 0f;
 			for (int dy = minDy; dy <= maxDy; dy++) {
-				int y = cy + dy;
+				int y = Math.min(Math.max(cy + dy, 0), height - 1);
 				float wy = dy == 0 ? cWeightY : 1f - cWeightY;
 				for (int dx = minDx; dx <= maxDx; dx++) {
-					int x = cx + dx;
-					int argb = image.getRGB(x, y);
+					int x = Math.min(Math.max(cx + dx, 0), width - 1);
+					int argb = getImage().getRGB(x, y);
 					float wx = dx == 0 ? cWeightX : 1f - cWeightX;
 					float w = wy * wx;
 					alpha += w * ((argb & 0xff000000) >>> 24);

@@ -49,6 +49,18 @@ public class ImageUtils {
 		return new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 	}
 
+	public static BufferedImage duplicateImage(BufferedImage image) {
+		int width = getWidth(image);
+		int height = getHeight(image);
+		BufferedImage duplicate = createImage(width, height);
+		for (int y = 0; y < height; y++) {
+			for (int x = 0; x < width; x++) {
+				duplicate.setRGB(x, y, image.getRGB(x, y));
+			}
+		}
+		return duplicate;
+	}
+
 	public static BufferedImage readFromFile(String filePath) {
 		return readFromFile(new File(filePath));
 	}
@@ -153,9 +165,8 @@ public class ImageUtils {
 				} else if (frontAlpha == 0x00) {
 					image.setRGB(x, y, backImage.getRGB(x, y)); // fully transparent
 				} else {
-					Color frontColor = new Color(frontRgba, true);
-					Color backColor = new Color(backImage.getRGB(x, y), true);
-					image.setRGB(x, y, ColorUtils.combineByTransparency(frontColor, backColor).getRGB());
+					int backRgba = backImage.getRGB(x, y);
+					image.setRGB(x, y, ColorUtils.combineByTransparency(frontRgba, backRgba));
 				}
 			}
 		}
@@ -184,12 +195,16 @@ public class ImageUtils {
 	public static BufferedImage addPadding(BufferedImage image, Insets padding, Color padColor) {
 		int width = getWidth(image);
 		int height = getHeight(image);
-		BufferedImage padImage = createImage(width + padding.left + padding.right,
-				height + padding.top + padding.bottom);
-		clearWithUniformColor(padImage, padColor);
-		for (int y = 0; y < height; y++) {
-			for (int x = 0; x < width; x++) {
-				padImage.setRGB(padding.left + x, padding.top + y, image.getRGB(x, y));
+		int padWidth = width + padding.left + padding.right;
+		int padHeight = height + padding.top + padding.bottom;
+		int padRgb = padColor.getRGB();
+		BufferedImage padImage = createImage(padWidth, padHeight);
+		for (int y = 0; y < padHeight; y++) {
+			int yr = y - padding.top;
+			for (int x = 0; x < padWidth; x++) {
+				int xr = x - padding.left;
+				int rgb = (yr >= 0 && yr < height && xr >= 0 && xr < width) ? image.getRGB(xr, yr) : padRgb;
+				padImage.setRGB(x, y, rgb);
 			}
 		}
 		return padImage;

@@ -14,6 +14,7 @@ import java.util.Objects;
 
 import org.maia.graphics2d.image.ImageSampler;
 import org.maia.graphics2d.image.ImageUtils;
+import org.maia.util.ColorUtils;
 
 public class QuadrilateralImageProjection {
 
@@ -53,9 +54,20 @@ public class QuadrilateralImageProjection {
 		return project(sourceImage, targetImageSize, targetArea, null);
 	}
 
-	public synchronized BufferedImage project(BufferedImage sourceImage, Dimension targetImageSize,
-			Quadrilateral targetArea, PseudoPerspective pseudoPerspective) {
+	public BufferedImage project(BufferedImage sourceImage, Dimension targetImageSize, Quadrilateral targetArea,
+			PseudoPerspective pseudoPerspective) {
 		BufferedImage targetImage = ImageUtils.createImage(targetImageSize);
+		projectOntoTargetImage(sourceImage, targetImage, targetArea, pseudoPerspective);
+		return targetImage;
+	}
+
+	public void projectOntoTargetImage(BufferedImage sourceImage, BufferedImage targetImage, Quadrilateral targetArea) {
+		projectOntoTargetImage(sourceImage, targetImage, targetArea, null);
+	}
+
+	public synchronized void projectOntoTargetImage(BufferedImage sourceImage, BufferedImage targetImage,
+			Quadrilateral targetArea, PseudoPerspective pseudoPerspective) {
+		Dimension targetImageSize = ImageUtils.getSize(targetImage);
 		EdgeSmoothingMask edgeSmoothingMask = null;
 		EdgeSmoothingMaskCacheKey edgeSmoothingMaskCacheKey = null;
 		if (isSmoothEdges()) {
@@ -66,7 +78,7 @@ public class QuadrilateralImageProjection {
 				edgeSmoothingMask = new EdgeSmoothingMask(targetImageSize, targetArea);
 			}
 		}
-		ImageSampler imageSampler = isSubSampling() ? ImageSampler.createDefaultImageSampler() : null;
+		ImageSampler imageSampler = isSubSampling() ? ImageSampler.createDefaultImageSampler(sourceImage) : null;
 		ComputeState computeState = null;
 		boolean reuseProjectionState = false;
 		ProjectionState projectionState = null;
@@ -114,7 +126,7 @@ public class QuadrilateralImageProjection {
 					if (imageSampler == null) {
 						argb = sourceImage.getRGB((int) Math.floor(sx), (int) Math.floor(sy));
 					} else {
-						argb = imageSampler.sampleRGB(sourceImage, sx, sy);
+						argb = imageSampler.sampleRGB(sx, sy);
 					}
 					if (edgeSmoothingMask != null) {
 						int alpha = edgeSmoothingMask.getMaskValue(tx, ty);
@@ -124,13 +136,12 @@ public class QuadrilateralImageProjection {
 						}
 						argb = (alpha << 24) | (argb & 0x00ffffff);
 					}
-					targetImage.setRGB(tx, ty, argb);
+					targetImage.setRGB(tx, ty, ColorUtils.combineByTransparency(argb, targetImage.getRGB(tx, ty)));
 				}
 			}
 		}
 		rememberEdgeSmoothing(edgeSmoothingMask, edgeSmoothingMaskCacheKey);
 		rememberProjection(projectionState, projectionStateCacheKey);
-		return targetImage;
 	}
 
 	private void rememberEdgeSmoothing(EdgeSmoothingMask edgeSmoothingMask,

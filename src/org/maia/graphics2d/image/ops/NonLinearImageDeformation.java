@@ -33,7 +33,7 @@ public class NonLinearImageDeformation {
 		int width = ImageUtils.getWidth(sourceImage);
 		int height = ImageUtils.getHeight(sourceImage);
 		BufferedImage targetImage = ImageUtils.createImage(width, height);
-		ImageSampler imageSampler = ImageSampler.createDefaultImageSampler();
+		ImageSampler imageSampler = ImageSampler.createDefaultImageSampler(sourceImage);
 		HorizontalCoordinateProjection projectionX = getHorizontalProjection();
 		VerticalCoordinateProjection projectionY = getVerticalProjection();
 		if (projectionX != null) {
@@ -43,7 +43,7 @@ public class NonLinearImageDeformation {
 					float xc = 0.5f + xi;
 					float pxc = projectionX.projectX(xc, yc, width, height);
 					float pyc = projectionY == null ? yc : projectionY.projectY(xc, yc, width, height);
-					int argb = imageSampler.sampleRGB(sourceImage, pxc, pyc);
+					int argb = imageSampler.sampleRGB(pxc, pyc);
 					targetImage.setRGB(xi, yi, argb);
 				}
 			}
@@ -53,7 +53,7 @@ public class NonLinearImageDeformation {
 				for (int yi = 0; yi < height; yi++) {
 					float yc = 0.5f + yi;
 					float pyc = projectionY == null ? yc : projectionY.projectY(xc, yc, width, height);
-					int argb = imageSampler.sampleRGB(sourceImage, xc, pyc);
+					int argb = imageSampler.sampleRGB(xc, pyc);
 					targetImage.setRGB(xi, yi, argb);
 				}
 			}
