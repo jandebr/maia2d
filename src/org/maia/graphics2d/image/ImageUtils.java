@@ -12,6 +12,7 @@ import java.awt.image.ImageObserver;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.List;
 
 import javax.imageio.ImageIO;
@@ -78,7 +79,10 @@ public class ImageUtils {
 	public static BufferedImage readFromResource(String resourcePath) {
 		BufferedImage image = null;
 		try {
-			return readFromStream(ClassLoader.getSystemResource(resourcePath).openStream());
+			URL url = ClassLoader.getSystemResource(resourcePath);
+			if (url != null) {
+				image = readFromStream(url.openStream());
+			}
 		} catch (IOException e) {
 			System.err.println("Failed to read image from resource path '" + resourcePath + "'");
 		}
@@ -98,13 +102,18 @@ public class ImageUtils {
 	}
 
 	public static void writeToFile(BufferedImage image, String filePath) {
+		writeToFile(image, new File(filePath));
+	}
+
+	public static void writeToFile(BufferedImage image, File file) {
 		String format = "png";
+		String filePath = file.getPath();
 		int i = filePath.lastIndexOf('.');
 		if (i > 0) {
 			format = filePath.substring(i + 1).toLowerCase();
 		}
 		try {
-			ImageIO.write(image, format, new File(filePath));
+			ImageIO.write(image, format, file);
 		} catch (IOException e) {
 			System.err.println("Failed to write image to file path '" + filePath + "'");
 		}
