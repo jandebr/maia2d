@@ -78,7 +78,7 @@ public class QuadrilateralImageProjection {
 				edgeSmoothingMask = new EdgeSmoothingMask(targetImageSize, targetArea);
 			}
 		}
-		ImageSampler imageSampler = isSubSampling() ? ImageSampler.createDefaultImageSampler(sourceImage) : null;
+		ImageSampler imageSampler = isSubSampling() ? ImageSampler.createBilinearImageSampler(sourceImage) : null;
 		ComputeState computeState = null;
 		boolean reuseProjectionState = false;
 		ProjectionState projectionState = null;

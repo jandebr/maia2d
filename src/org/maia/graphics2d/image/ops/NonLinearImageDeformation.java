@@ -30,32 +30,68 @@ public class NonLinearImageDeformation {
 	}
 
 	public BufferedImage deform(BufferedImage sourceImage) {
+		if (getHorizontalProjection() != null && getVerticalProjection() != null) {
+			return deformBidirectionally(sourceImage);
+		} else if (getHorizontalProjection() != null) {
+			return deformHorizontally(sourceImage);
+		} else if (getVerticalProjection() != null) {
+			return deformVertically(sourceImage);
+		} else {
+			return sourceImage;
+		}
+	}
+
+	private BufferedImage deformHorizontally(BufferedImage sourceImage) {
 		int width = ImageUtils.getWidth(sourceImage);
 		int height = ImageUtils.getHeight(sourceImage);
 		BufferedImage targetImage = ImageUtils.createImage(width, height);
-		ImageSampler imageSampler = ImageSampler.createDefaultImageSampler(sourceImage);
+		ImageSampler imageSampler = ImageSampler.createHorizontalLinearImageSampler(sourceImage);
 		HorizontalCoordinateProjection projectionX = getHorizontalProjection();
-		VerticalCoordinateProjection projectionY = getVerticalProjection();
-		if (projectionX != null) {
-			for (int yi = 0; yi < height; yi++) {
-				float yc = 0.5f + yi;
-				for (int xi = 0; xi < width; xi++) {
-					float xc = 0.5f + xi;
-					float pxc = projectionX.projectX(xc, yc, width, height);
-					float pyc = projectionY == null ? yc : projectionY.projectY(xc, yc, width, height);
-					int argb = imageSampler.sampleRGB(pxc, pyc);
-					targetImage.setRGB(xi, yi, argb);
-				}
-			}
-		} else {
+		for (int yi = 0; yi < height; yi++) {
+			float yc = 0.5f + yi;
 			for (int xi = 0; xi < width; xi++) {
 				float xc = 0.5f + xi;
-				for (int yi = 0; yi < height; yi++) {
-					float yc = 0.5f + yi;
-					float pyc = projectionY == null ? yc : projectionY.projectY(xc, yc, width, height);
-					int argb = imageSampler.sampleRGB(xc, pyc);
-					targetImage.setRGB(xi, yi, argb);
-				}
+				float pxc = projectionX.projectX(xc, yc, width, height);
+				int argb = imageSampler.sampleRGB(pxc, yc);
+				targetImage.setRGB(xi, yi, argb);
+			}
+		}
+		return targetImage;
+	}
+
+	private BufferedImage deformVertically(BufferedImage sourceImage) {
+		int width = ImageUtils.getWidth(sourceImage);
+		int height = ImageUtils.getHeight(sourceImage);
+		BufferedImage targetImage = ImageUtils.createImage(width, height);
+		ImageSampler imageSampler = ImageSampler.createVerticalLinearImageSampler(sourceImage);
+		VerticalCoordinateProjection projectionY = getVerticalProjection();
+		for (int xi = 0; xi < width; xi++) {
+			float xc = 0.5f + xi;
+			for (int yi = 0; yi < height; yi++) {
+				float yc = 0.5f + yi;
+				float pyc = projectionY.projectY(xc, yc, width, height);
+				int argb = imageSampler.sampleRGB(xc, pyc);
+				targetImage.setRGB(xi, yi, argb);
+			}
+		}
+		return targetImage;
+	}
+
+	private BufferedImage deformBidirectionally(BufferedImage sourceImage) {
+		int width = ImageUtils.getWidth(sourceImage);
+		int height = ImageUtils.getHeight(sourceImage);
+		BufferedImage targetImage = ImageUtils.createImage(width, height);
+		ImageSampler imageSampler = ImageSampler.createBilinearImageSampler(sourceImage);
+		HorizontalCoordinateProjection projectionX = getHorizontalProjection();
+		VerticalCoordinateProjection projectionY = getVerticalProjection();
+		for (int yi = 0; yi < height; yi++) {
+			float yc = 0.5f + yi;
+			for (int xi = 0; xi < width; xi++) {
+				float xc = 0.5f + xi;
+				float pxc = projectionX.projectX(xc, yc, width, height);
+				float pyc = projectionY.projectY(xc, yc, width, height);
+				int argb = imageSampler.sampleRGB(pxc, pyc);
+				targetImage.setRGB(xi, yi, argb);
 			}
 		}
 		return targetImage;

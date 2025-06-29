@@ -3,6 +3,8 @@ package org.maia.graphics2d.image;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 
+import org.maia.util.ColorUtils;
+
 public abstract class ImageSampler {
 
 	private BufferedImage image;
@@ -33,8 +35,16 @@ public abstract class ImageSampler {
 		return new Color(sampleRGB(sx, sy), true);
 	}
 
-	public static ImageSampler createDefaultImageSampler(BufferedImage image) {
-		return new InterpolatingImageSampler(image);
+	public static ImageSampler createBilinearImageSampler(BufferedImage image) {
+		return new BilinearImageSampler(image);
+	}
+
+	public static ImageSampler createHorizontalLinearImageSampler(BufferedImage image) {
+		return new HorizontalLinearImageSampler(image);
+	}
+
+	public static ImageSampler createVerticalLinearImageSampler(BufferedImage image) {
+		return new VerticalLinearImageSampler(image);
 	}
 
 	public BufferedImage getImage() {
@@ -49,7 +59,7 @@ public abstract class ImageSampler {
 		return imageHeight;
 	}
 
-	private static class InterpolatingImageSampler extends ImageSampler {
+	private static class BilinearImageSampler extends ImageSampler {
 
 		private int cx, cy;
 
@@ -59,7 +69,7 @@ public abstract class ImageSampler {
 
 		private float cWeightX, cWeightY;
 
-		public InterpolatingImageSampler(BufferedImage image) {
+		public BilinearImageSampler(BufferedImage image) {
 			super(image);
 		}
 
@@ -81,9 +91,9 @@ public abstract class ImageSampler {
 					float wx = dx == 0 ? cWeightX : 1f - cWeightX;
 					float w = wy * wx;
 					alpha += w * ((argb & 0xff000000) >>> 24);
-					red += w * ((argb & 0x00ff0000) >>> 16);
-					green += w * ((argb & 0x0000ff00) >>> 8);
-					blue += w * (argb & 0x000000ff);
+					red += w * ((argb & 0xff0000) >>> 16);
+					green += w * ((argb & 0xff00) >>> 8);
+					blue += w * (argb & 0xff);
 				}
 			}
 			int alphaInt = Math.min(Math.round(alpha), 255);
@@ -120,6 +130,54 @@ public abstract class ImageSampler {
 			}
 			this.cWeightX = 1f - Math.abs(dx);
 			this.cWeightY = 1f - Math.abs(dy);
+		}
+
+	}
+
+	private static class HorizontalLinearImageSampler extends ImageSampler {
+
+		public HorizontalLinearImageSampler(BufferedImage image) {
+			super(image);
+		}
+
+		@Override
+		public int sampleRGB(float sx, float sy) {
+			int cx = (int) Math.floor(sx);
+			int cy = (int) Math.floor(sy);
+			int crgb = getImage().getRGB(cx, cy);
+			float delta = sx - cx - 0.5f;
+			float cw = 1f - Math.abs(delta);
+			if (cw == 1f) {
+				return crgb;
+			} else {
+				int dx = (int) Math.signum(delta);
+				int drgb = getImage().getRGB(cx + dx, cy);
+				return ColorUtils.interpolate(drgb, crgb, cw);
+			}
+		}
+
+	}
+
+	private static class VerticalLinearImageSampler extends ImageSampler {
+
+		public VerticalLinearImageSampler(BufferedImage image) {
+			super(image);
+		}
+
+		@Override
+		public int sampleRGB(float sx, float sy) {
+			int cx = (int) Math.floor(sx);
+			int cy = (int) Math.floor(sy);
+			int crgb = getImage().getRGB(cx, cy);
+			float delta = sy - cy - 0.5f;
+			float cw = 1f - Math.abs(delta);
+			if (cw == 1f) {
+				return crgb;
+			} else {
+				int dy = (int) Math.signum(delta);
+				int drgb = getImage().getRGB(cx, cy + dy);
+				return ColorUtils.interpolate(drgb, crgb, cw);
+			}
 		}
 
 	}

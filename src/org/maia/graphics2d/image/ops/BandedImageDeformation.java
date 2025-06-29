@@ -91,18 +91,30 @@ public abstract class BandedImageDeformation<E extends ImageBand> extends NonLin
 	private static class VerticalBandedImageDeformation extends BandedImageDeformation<VerticalImageBand>
 			implements HorizontalCoordinateProjection {
 
+		private int bandIndex = -1;
+
+		private float bandOffset;
+
+		private float bandWidth;
+
+		private int sourceOffset;
+
+		private float previousY;
+
 		public VerticalBandedImageDeformation() {
 			setHorizontalProjection(this);
 		}
 
 		@Override
 		public float projectX(float x, float y, int width, int height) {
-			int bandIndex = 0;
-			int bandCount = getBands().size();
-			int sourceOffset = 0;
-			float bandOffset = 0;
-			float bandWidth = getBand(bandIndex).getTargetWidth(y, width, height);
-			while (x >= bandOffset + bandWidth && bandIndex < bandCount - 1) {
+			if (y != previousY || bandIndex < 0) {
+				bandIndex = 0;
+				bandOffset = 0f;
+				bandWidth = getBand(0).getTargetWidth(y, width, height);
+				sourceOffset = 0;
+				previousY = y;
+			}
+			while (x >= bandOffset + bandWidth && bandIndex < getBands().size() - 1) {
 				sourceOffset += getBand(bandIndex).getSourceWidth();
 				bandOffset += bandWidth;
 				bandWidth = getBand(++bandIndex).getTargetWidth(y, width, height);
@@ -117,18 +129,30 @@ public abstract class BandedImageDeformation<E extends ImageBand> extends NonLin
 	private static class HorizontalBandedImageDeformation extends BandedImageDeformation<HorizontalImageBand>
 			implements VerticalCoordinateProjection {
 
+		private int bandIndex = -1;
+
+		private float bandOffset;
+
+		private float bandHeight;
+
+		private int sourceOffset;
+
+		private float previousX;
+
 		public HorizontalBandedImageDeformation() {
 			setVerticalProjection(this);
 		}
 
 		@Override
 		public float projectY(float x, float y, int width, int height) {
-			int bandIndex = 0;
-			int bandCount = getBands().size();
-			int sourceOffset = 0;
-			float bandOffset = 0;
-			float bandHeight = getBand(bandIndex).getTargetHeight(x, width, height);
-			while (y >= bandOffset + bandHeight && bandIndex < bandCount - 1) {
+			if (x != previousX || bandIndex < 0) {
+				bandIndex = 0;
+				bandOffset = 0f;
+				bandHeight = getBand(0).getTargetHeight(x, width, height);
+				sourceOffset = 0;
+				previousX = x;
+			}
+			while (y >= bandOffset + bandHeight && bandIndex < getBands().size() - 1) {
 				sourceOffset += getBand(bandIndex).getSourceHeight();
 				bandOffset += bandHeight;
 				bandHeight = getBand(++bandIndex).getTargetHeight(x, width, height);
@@ -190,15 +214,17 @@ public abstract class BandedImageDeformation<E extends ImageBand> extends NonLin
 
 		private PolyLine2D leftEdgeSequenced;
 
+		private int leftEdgeSeqIndex;
+
 		private Curve2D rightEdge;
 
 		private PolyLine2D rightEdgeSequenced;
 
+		private int rightEdgeSeqIndex;
+
 		private float previousY = Float.NaN;
 
-		private float previousXleft;
-
-		private float previousXright;
+		private float previousTargetWidth;
 
 		public CurvedVerticalImageBand(int sourceWidth, Curve2D leftEdge, Curve2D rightEdge) {
 			super(sourceWidth);
@@ -208,30 +234,43 @@ public abstract class BandedImageDeformation<E extends ImageBand> extends NonLin
 
 		@Override
 		public float getTargetWidth(float y, int width, int height) {
-			float xLeft = 0, xRight = width;
-			if (y == previousY) {
-				xLeft = previousXleft;
-				xRight = previousXright;
-			} else {
-				PolyLine2D leftEdgeSeq = getLeftEdgeSequenced(height);
-				if (leftEdgeSeq != null) {
-					Point2D p = leftEdgeSeq.intersectAtY(y);
-					if (p != null) {
-						xLeft = (float) p.getX();
-					}
+			if (y != previousY) {
+				if (y < previousY) {
+					leftEdgeSeqIndex = 0;
+					rightEdgeSeqIndex = 0;
 				}
-				PolyLine2D rightEdgeSeq = getRightEdgeSequenced(height);
-				if (rightEdgeSeq != null) {
-					Point2D p = rightEdgeSeq.intersectAtY(y);
-					if (p != null) {
-						xRight = (float) p.getX();
-					}
-				}
+				float xLeft = intersectLeftEdgeAtY(y, width, height);
+				float xRight = intersectRightEdgeAtY(y, width, height);
 				previousY = y;
-				previousXleft = xLeft;
-				previousXright = xRight;
+				previousTargetWidth = Math.max(xRight - xLeft, 1f);
 			}
-			return Math.max(xRight - xLeft, 1f);
+			return previousTargetWidth;
+		}
+
+		private float intersectLeftEdgeAtY(float y, int width, int height) {
+			PolyLine2D leftEdgeSeq = getLeftEdgeSequenced(height);
+			if (leftEdgeSeq != null) {
+				int n = leftEdgeSeq.getEdges().size();
+				do {
+					Point2D p = leftEdgeSeq.getEdges().get(leftEdgeSeqIndex).intersectAtY(y);
+					if (p != null)
+						return (float) p.getX();
+				} while (++leftEdgeSeqIndex < n);
+			}
+			return 0f;
+		}
+
+		private float intersectRightEdgeAtY(float y, int width, int height) {
+			PolyLine2D rightEdgeSeq = getRightEdgeSequenced(height);
+			if (rightEdgeSeq != null) {
+				int n = rightEdgeSeq.getEdges().size();
+				do {
+					Point2D p = rightEdgeSeq.getEdges().get(rightEdgeSeqIndex).intersectAtY(y);
+					if (p != null)
+						return (float) p.getX();
+				} while (++rightEdgeSeqIndex < n);
+			}
+			return width;
 		}
 
 		private PolyLine2D getLeftEdgeSequenced(int height) {
@@ -298,15 +337,17 @@ public abstract class BandedImageDeformation<E extends ImageBand> extends NonLin
 
 		private PolyLine2D topEdgeSequenced;
 
+		private int topEdgeSeqIndex;
+
 		private Curve2D bottomEdge;
 
 		private PolyLine2D bottomEdgeSequenced;
 
+		private int bottomEdgeSeqIndex;
+
 		private float previousX = Float.NaN;
 
-		private float previousYtop;
-
-		private float previousYbottom;
+		private float previousTargetHeight;
 
 		public CurvedHorizontalImageBand(int sourceHeight, Curve2D topEdge, Curve2D bottomEdge) {
 			super(sourceHeight);
@@ -316,30 +357,43 @@ public abstract class BandedImageDeformation<E extends ImageBand> extends NonLin
 
 		@Override
 		public float getTargetHeight(float x, int width, int height) {
-			float yTop = 0, yBottom = height;
-			if (x == previousX) {
-				yTop = previousYtop;
-				yBottom = previousYbottom;
-			} else {
-				PolyLine2D topEdgeSeq = getTopEdgeSequenced(width);
-				if (topEdgeSeq != null) {
-					Point2D p = topEdgeSeq.intersectAtX(x);
-					if (p != null) {
-						yTop = (float) p.getY();
-					}
+			if (x != previousX) {
+				if (x < previousX) {
+					topEdgeSeqIndex = 0;
+					bottomEdgeSeqIndex = 0;
 				}
-				PolyLine2D bottomEdgeSeq = getBottomEdgeSequenced(width);
-				if (bottomEdgeSeq != null) {
-					Point2D p = bottomEdgeSeq.intersectAtX(x);
-					if (p != null) {
-						yBottom = (float) p.getY();
-					}
-				}
+				float yTop = intersectTopEdgeAtX(x, width, height);
+				float yBottom = intersectBottomEdgeAtX(x, width, height);
 				previousX = x;
-				previousYtop = yTop;
-				previousYbottom = yBottom;
+				previousTargetHeight = Math.max(yBottom - yTop, 1f);
 			}
-			return Math.max(yBottom - yTop, 1f);
+			return previousTargetHeight;
+		}
+
+		private float intersectTopEdgeAtX(float x, int width, int height) {
+			PolyLine2D topEdgeSeq = getTopEdgeSequenced(width);
+			if (topEdgeSeq != null) {
+				int n = topEdgeSeq.getEdges().size();
+				do {
+					Point2D p = topEdgeSeq.getEdges().get(topEdgeSeqIndex).intersectAtX(x);
+					if (p != null)
+						return (float) p.getY();
+				} while (++topEdgeSeqIndex < n);
+			}
+			return 0f;
+		}
+
+		private float intersectBottomEdgeAtX(float x, int width, int height) {
+			PolyLine2D bottomEdgeSeq = getBottomEdgeSequenced(width);
+			if (bottomEdgeSeq != null) {
+				int n = bottomEdgeSeq.getEdges().size();
+				do {
+					Point2D p = bottomEdgeSeq.getEdges().get(bottomEdgeSeqIndex).intersectAtX(x);
+					if (p != null)
+						return (float) p.getY();
+				} while (++bottomEdgeSeqIndex < n);
+			}
+			return height;
 		}
 
 		private PolyLine2D getTopEdgeSequenced(int width) {
