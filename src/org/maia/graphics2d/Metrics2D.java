@@ -14,6 +14,12 @@ public class Metrics2D {
 
 	private long matrixInversions;
 
+	private long vectorDotProducts;
+
+	private long vectorNormalizations;
+
+	private long vectorAnglesInBetween;
+
 	private long lineWithLineIntersections;
 
 	private static NumberFormat numberFormat;
@@ -48,6 +54,9 @@ public class Metrics2D {
 		builder.append("\tMatrix inversions: ").append(format(matrixInversions)).append("\n");
 		builder.append("\tPoint transformations: ").append(format(pointTransformations)).append("\n");
 		builder.append("\tPoint normalizations: ").append(format(pointNormalizations)).append("\n");
+		builder.append("\tVector dot products: ").append(format(vectorDotProducts)).append("\n");
+		builder.append("\tVector normalizations: ").append(format(vectorNormalizations)).append("\n");
+		builder.append("\tVector angles: ").append(format(vectorAnglesInBetween)).append("\n");
 		builder.append("\t---\n");
 		builder.append("\tLine with line intersections: ").append(format(lineWithLineIntersections)).append("\n");
 		builder.append("}");
@@ -63,6 +72,9 @@ public class Metrics2D {
 		pointNormalizations = 0;
 		matrixMultiplications = 0;
 		matrixInversions = 0;
+		vectorDotProducts = 0;
+		vectorNormalizations = 0;
+		vectorAnglesInBetween = 0;
 		lineWithLineIntersections = 0;
 	}
 
@@ -80,6 +92,18 @@ public class Metrics2D {
 
 	public void incrementMatrixInversions() {
 		matrixInversions++;
+	}
+
+	public void incrementVectorDotProducts() {
+		vectorDotProducts++;
+	}
+
+	public void incrementVectorNormalizations() {
+		vectorNormalizations++;
+	}
+
+	public void incrementVectorAnglesInBetween() {
+		vectorAnglesInBetween++;
 	}
 
 	public void incrementLineWithLineIntersections() {
@@ -100,6 +124,18 @@ public class Metrics2D {
 
 	public long getMatrixInversions() {
 		return matrixInversions;
+	}
+
+	public long getVectorDotProducts() {
+		return vectorDotProducts;
+	}
+
+	public long getVectorNormalizations() {
+		return vectorNormalizations;
+	}
+
+	public long getVectorAnglesInBetween() {
+		return vectorAnglesInBetween;
 	}
 
 	public long getLineWithLineIntersections() {
