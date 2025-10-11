@@ -1,7 +1,9 @@
 package org.maia.graphics2d.geometry;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Vector;
 
 public class PolyLine2D {
@@ -16,6 +18,17 @@ public class PolyLine2D {
 
 	public PolyLine2D(List<Point2D> vertices) {
 		this.vertices = vertices;
+	}
+
+	public Set<Point2D> intersectAll(Line2D line) {
+		Set<Point2D> intersections = new HashSet<>(getVertices().size());
+		for (ClosedLineSegment2D edge : getEdges()) {
+			Point2D p = edge.intersect(line);
+			if (p != null) {
+				intersections.add(p);
+			}
+		}
+		return intersections;
 	}
 
 	public Point2D intersect(Line2D line) {
