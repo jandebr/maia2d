@@ -78,19 +78,19 @@ public class ImagePool {
 		@Override
 		protected void evicted(String imageIdentifier, Image image) {
 			super.evicted(imageIdentifier, image);
-			PooledImageLogger.log(imageIdentifier, "Evicted image from '" + getName() + "' pool");
+			PooledImageLogger.logDebug(imageIdentifier, "Evicted image from '" + getName() + "' pool");
 		}
 
 		@Override
 		public void storeInCache(String imageIdentifier, Image image) {
 			super.storeInCache(imageIdentifier, image);
-			PooledImageLogger.log(imageIdentifier, "Added image to '" + getName() + "' pool");
+			PooledImageLogger.logDebug(imageIdentifier, "Added image to '" + getName() + "' pool");
 		}
 
 		@Override
 		public void removeFromCache(String imageIdentifier) {
 			super.removeFromCache(imageIdentifier);
-			PooledImageLogger.log(imageIdentifier, "Removed image from '" + getName() + "' pool");
+			PooledImageLogger.logDebug(imageIdentifier, "Removed image from '" + getName() + "' pool");
 		}
 
 	}

@@ -35,25 +35,44 @@ public abstract class AbstractPooledImage implements PooledImage {
 
 	@Override
 	public synchronized Image getImage() {
+		String imageId = getImageIdentifier();
 		Image image = probeImage();
-		if (image == null && !getImagePool().isVoidImage(getImageIdentifier())) {
+		if (image != null) {
+			PooledImageLogger.logInfo(imageId, "GET-CACHED image");
+		} else if (!getImagePool().isVoidImage(imageId)) {
+			PooledImageLogger.logInfo(imageId, "PRODUCE-AWAIT image");
 			image = produceImage();
+		} else {
+			PooledImageLogger.logInfo(imageId, "GET-VOID image");
 		}
 		return image;
 	}
 
 	@Override
 	public synchronized Image requestImage() {
+		String imageId = getImageIdentifier();
 		Image image = probeImage();
-		if (image == null && !getImagePool().isVoidImage(getImageIdentifier())) {
+		if (image != null) {
+			PooledImageLogger.logInfo(imageId, "REQUEST-CACHED image");
+		} else if (!getImagePool().isVoidImage(imageId)) {
+			PooledImageLogger.logInfo(imageId, "PRODUCE-ASYNC image");
 			imageProductionTaskWorker.addTask(new ImageProductionTask());
+		} else {
+			PooledImageLogger.logInfo(imageId, "REQUEST-VOID image");
 		}
 		return image;
 	}
 
 	@Override
 	public synchronized Image probeImage() {
-		return getImagePool().fetchImage(getImageIdentifier());
+		String imageId = getImageIdentifier();
+		Image image = getImagePool().fetchImage(imageId);
+		if (image != null) {
+			PooledImageLogger.logInfo(imageId, "PROBE-CACHED image");
+		} else {
+			PooledImageLogger.logInfo(imageId, "PROBE-MISSING image");
+		}
+		return image;
 	}
 
 	private Image produceImage() {
@@ -98,7 +117,7 @@ public abstract class AbstractPooledImage implements PooledImage {
 
 		@Override
 		public void process() {
-			PooledImageLogger.log(getImageIdentifier(), "Producing image");
+			PooledImageLogger.logDebug(getImageIdentifier(), "Producing image");
 			produceImage();
 		}
 
@@ -126,7 +145,7 @@ public abstract class AbstractPooledImage implements PooledImage {
 			}
 			if (currentTask == null || !currentTask.getImageIdentifier().equals(task.getImageIdentifier())) {
 				queue.add(task);
-				PooledImageLogger.log(task.getImageIdentifier(), "Queueing image production");
+				PooledImageLogger.logDebug(task.getImageIdentifier(), "Queueing image production");
 			}
 		}
 

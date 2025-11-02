@@ -136,11 +136,15 @@ public class ImageUtils {
 	}
 
 	public static BufferedImage convertToBufferedImage(Image image) {
-		BufferedImage bufImage = createImage(getSize(image));
-		Graphics2D graphics2D = bufImage.createGraphics();
-		graphics2D.drawImage(image, 0, 0, null);
-		graphics2D.dispose();
-		return bufImage;
+		if (image instanceof BufferedImage) {
+			return (BufferedImage) image;
+		} else {
+			BufferedImage bufImage = createImage(getSize(image));
+			Graphics2D graphics2D = bufImage.createGraphics();
+			graphics2D.drawImage(image, 0, 0, null);
+			graphics2D.dispose();
+			return bufImage;
+		}
 	}
 
 	public static BufferedImage convertToGrayscale(BufferedImage image) {
