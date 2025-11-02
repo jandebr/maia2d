@@ -7,6 +7,7 @@ import org.maia.graphics2d.image.ImageInfo;
 import org.maia.graphics2d.image.ImageInfoImpl;
 import org.maia.util.AsyncSerialTaskWorker;
 import org.maia.util.AsyncSerialTaskWorker.AsyncTask;
+import org.maia.util.StringUtils;
 
 public abstract class AbstractPooledImage implements PooledImage {
 
@@ -36,14 +37,14 @@ public abstract class AbstractPooledImage implements PooledImage {
 	@Override
 	public synchronized Image getImage() {
 		String imageId = getImageIdentifier();
-		Image image = probeImage();
+		Image image = getImagePool().fetchImage(imageId);
 		if (image != null) {
-			PooledImageLogger.logInfo(imageId, "GET-CACHED image");
+			logOperation("GET-CACHED");
 		} else if (!getImagePool().isVoidImage(imageId)) {
-			PooledImageLogger.logInfo(imageId, "PRODUCE-AWAIT image");
 			image = produceImage();
+			logOperation("PRODUCE-AWAIT");
 		} else {
-			PooledImageLogger.logInfo(imageId, "GET-VOID image");
+			logOperation("GET-VOID");
 		}
 		return image;
 	}
@@ -51,14 +52,14 @@ public abstract class AbstractPooledImage implements PooledImage {
 	@Override
 	public synchronized Image requestImage() {
 		String imageId = getImageIdentifier();
-		Image image = probeImage();
+		Image image = getImagePool().fetchImage(imageId);
 		if (image != null) {
-			PooledImageLogger.logInfo(imageId, "REQUEST-CACHED image");
+			logOperation("REQUEST-CACHED");
 		} else if (!getImagePool().isVoidImage(imageId)) {
-			PooledImageLogger.logInfo(imageId, "PRODUCE-ASYNC image");
 			imageProductionTaskWorker.addTask(new ImageProductionTask());
+			logOperation("PRODUCE-ASYNC");
 		} else {
-			PooledImageLogger.logInfo(imageId, "REQUEST-VOID image");
+			logOperation("REQUEST-VOID");
 		}
 		return image;
 	}
@@ -68,11 +69,17 @@ public abstract class AbstractPooledImage implements PooledImage {
 		String imageId = getImageIdentifier();
 		Image image = getImagePool().fetchImage(imageId);
 		if (image != null) {
-			PooledImageLogger.logInfo(imageId, "PROBE-CACHED image");
+			logOperation("PROBE-CACHED");
 		} else {
-			PooledImageLogger.logInfo(imageId, "PROBE-MISSING image");
+			logOperation("PROBE-MISSING");
 		}
 		return image;
+	}
+
+	@Override
+	public synchronized void disposeImage() {
+		getImagePool().removeImage(getImageIdentifier());
+		logOperation("DISPOSE");
 	}
 
 	private Image produceImage() {
@@ -90,9 +97,10 @@ public abstract class AbstractPooledImage implements PooledImage {
 		return image;
 	}
 
-	@Override
-	public void disposeImage() {
-		getImagePool().removeImage(getImageIdentifier());
+	private void logOperation(String operation) {
+		if (PooledImageLogger.logInfoEnabled) {
+			PooledImageLogger.logInfo(getImageIdentifier(), StringUtils.fitWidth(operation, 16));
+		}
 	}
 
 	@Override
