@@ -41,8 +41,8 @@ public abstract class AbstractPooledImage implements PooledImage {
 		if (image != null) {
 			logOperation("GET-CACHED");
 		} else if (!getImagePool().isVoidImage(imageId)) {
+			logOperation("GET-PRODUCE");
 			image = produceImage();
-			logOperation("PRODUCE-AWAIT");
 		} else {
 			logOperation("GET-VOID");
 		}
@@ -56,8 +56,8 @@ public abstract class AbstractPooledImage implements PooledImage {
 		if (image != null) {
 			logOperation("REQUEST-CACHED");
 		} else if (!getImagePool().isVoidImage(imageId)) {
+			logOperation("REQUEST-PRODUCE");
 			imageProductionTaskWorker.addTask(new ImageProductionTask());
-			logOperation("PRODUCE-ASYNC");
 		} else {
 			logOperation("REQUEST-VOID");
 		}
@@ -78,8 +78,8 @@ public abstract class AbstractPooledImage implements PooledImage {
 
 	@Override
 	public synchronized void disposeImage() {
-		getImagePool().removeImage(getImageIdentifier());
 		logOperation("DISPOSE");
+		getImagePool().removeImage(getImageIdentifier());
 	}
 
 	private Image produceImage() {
