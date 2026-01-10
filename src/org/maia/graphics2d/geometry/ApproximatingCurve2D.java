@@ -1,7 +1,6 @@
 package org.maia.graphics2d.geometry;
 
 import java.util.List;
-import java.util.Vector;
 
 import org.maia.graphics2d.transform.TransformMatrix2D;
 
@@ -57,13 +56,21 @@ public class ApproximatingCurve2D extends AbstractCurve2D implements Cloneable {
 
 	private double endT;
 
-	private ApproximatingCurve2D(List<Point2D> controlPoints, int blendingFunctionOrder, double[] knots, double startT,
-			double endT) {
+	protected ApproximatingCurve2D(List<Point2D> controlPoints, int blendingFunctionOrder, double[] knots,
+			double startT, double endT) {
+		checkParameters(blendingFunctionOrder, controlPoints.size() - 1);
 		this.controlPoints = controlPoints;
 		this.blendingFunctionOrder = blendingFunctionOrder;
 		this.knots = knots;
 		this.startT = startT;
 		this.endT = endT;
+	}
+
+	protected void checkParameters(int m, int L) {
+		if (m < 2)
+			throw new IllegalArgumentException("The order (" + m + ") should be at least 2");
+		if (L + 1 < m)
+			throw new IllegalArgumentException("Too few control points (" + (L + 1) + "), should be at least " + m);
 	}
 
 	@Override
@@ -79,7 +86,7 @@ public class ApproximatingCurve2D extends AbstractCurve2D implements Cloneable {
 		int L = getControlPoints().size() - 1;
 		for (int k = 0; k <= L; k++) {
 			Point2D cp = getControlPoints().get(k);
-			double w = evaluateBlendingFunction(k, getBlendingFunctionOrder(), L, tp, getKnots());
+			double w = BSplineUtils.evaluateBlendingFunction(k, getBlendingFunctionOrder(), L, tp, getKnots());
 			x += w * cp.getX();
 			y += w * cp.getY();
 		}
@@ -95,7 +102,7 @@ public class ApproximatingCurve2D extends AbstractCurve2D implements Cloneable {
 		return tCurve;
 	}
 
-	private double projectT(double t) {
+	protected double projectT(double t) {
 		t = Math.min(Math.max(t, 0.0), 1.0);
 		return getStartT() + t * (getEndT() - getStartT());
 	}
@@ -111,8 +118,7 @@ public class ApproximatingCurve2D extends AbstractCurve2D implements Cloneable {
 	public static Curve2D createStandardCurve(List<Point2D> controlPoints, int blendingFunctionOrder) {
 		int m = blendingFunctionOrder;
 		int L = controlPoints.size() - 1;
-		checkParameters(m, L);
-		return new ApproximatingCurve2D(controlPoints, m, buildStandardKnots(m, L), 0, L - m + 2);
+		return new ApproximatingCurve2D(controlPoints, m, BSplineUtils.buildStandardKnots(m, L), 0, L - m + 2);
 	}
 
 	public static Curve2D createUniformOpenBezierCurve(List<Point2D> controlPoints) {
@@ -126,8 +132,7 @@ public class ApproximatingCurve2D extends AbstractCurve2D implements Cloneable {
 	public static Curve2D createUniformOpenCurve(List<Point2D> controlPoints, int blendingFunctionOrder) {
 		int m = blendingFunctionOrder;
 		int L = controlPoints.size() - 1;
-		checkParameters(m, L);
-		return new ApproximatingCurve2D(controlPoints, m, buildEquispacedKnots(m, L), m - 1, L + 1);
+		return new ApproximatingCurve2D(controlPoints, m, BSplineUtils.buildEquispacedKnots(m, L), m - 1, L + 1);
 	}
 
 	public static Curve2D createUniformClosedBezierCurve(List<Point2D> controlPoints) {
@@ -140,18 +145,9 @@ public class ApproximatingCurve2D extends AbstractCurve2D implements Cloneable {
 
 	public static Curve2D createUniformClosedCurve(List<Point2D> controlPoints, int blendingFunctionOrder) {
 		int m = blendingFunctionOrder;
-		int L = controlPoints.size() - 1;
-		checkParameters(m, L);
-		List<Point2D> derivedPoints = deriveControlPointsToCloseCurve(controlPoints, m);
-		L = derivedPoints.size() - 1;
-		return new ApproximatingCurve2D(derivedPoints, m, buildEquispacedKnots(m, L), m - 1, L + 1);
-	}
-
-	private static void checkParameters(int m, int L) {
-		if (m < 2)
-			throw new IllegalArgumentException("The order (" + m + ") should be at least 2");
-		if (L + 1 < m)
-			throw new IllegalArgumentException("Too few control points (" + (L + 1) + "), should be at least " + m);
+		List<Point2D> derivedPoints = BSplineUtils.deriveControlPointsToCloseCurve(controlPoints, m);
+		int L = derivedPoints.size() - 1;
+		return new ApproximatingCurve2D(derivedPoints, m, BSplineUtils.buildEquispacedKnots(m, L), m - 1, L + 1);
 	}
 
 	private static int chooseBlendingFunctionOrder(List<Point2D> controlPoints) {
@@ -161,60 +157,7 @@ public class ApproximatingCurve2D extends AbstractCurve2D implements Cloneable {
 		return Math.max(Math.min(controlPoints.size(), 4), 2);
 	}
 
-	private static List<Point2D> deriveControlPointsToCloseCurve(List<Point2D> controlPoints, int m) {
-		List<Point2D> derivedPoints = new Vector<Point2D>(controlPoints.size() + m - 1);
-		derivedPoints.addAll(controlPoints);
-		for (int i = 0; i < m - 1; i++) {
-			derivedPoints.add(controlPoints.get(i));
-		}
-		return derivedPoints;
-	}
-
-	private static double[] buildEquispacedKnots(int m, int L) {
-		double[] knots = new double[L + m + 1];
-		for (int i = 0; i <= L + m; i++) {
-			knots[i] = i;
-		}
-		return knots;
-	}
-
-	private static double[] buildStandardKnots(int m, int L) {
-		double[] knots = new double[L + m + 1];
-		for (int i = 0; i <= L + m; i++) {
-			if (i < m) {
-				knots[i] = 0;
-			} else if (i <= L) {
-				knots[i] = i - m + 1;
-			} else {
-				knots[i] = L - m + 2;
-			}
-		}
-		return knots;
-	}
-
-	private static double evaluateBlendingFunction(int k, int m, int L, double t, double[] knots) {
-		if (m == 1) {
-			if (t == knots[knots.length - 1] && k == L) {
-				return 1.0;
-			} else if (t >= knots[k] && t < knots[k + 1]) {
-				return 1.0;
-			} else {
-				return 0.0;
-			}
-		}
-		double sum = 0;
-		double denom1 = knots[k + m - 1] - knots[k];
-		if (denom1 != 0) {
-			sum = (t - knots[k]) / denom1 * evaluateBlendingFunction(k, m - 1, L, t, knots);
-		}
-		double denom2 = knots[k + m] - knots[k + 1];
-		if (denom2 != 0) {
-			sum += (knots[k + m] - t) / denom2 * evaluateBlendingFunction(k + 1, m - 1, L, t, knots);
-		}
-		return sum;
-	}
-
-	private List<Point2D> getControlPoints() {
+	protected List<Point2D> getControlPoints() {
 		return controlPoints;
 	}
 
@@ -222,19 +165,19 @@ public class ApproximatingCurve2D extends AbstractCurve2D implements Cloneable {
 		this.controlPoints = controlPoints;
 	}
 
-	private int getBlendingFunctionOrder() {
+	public int getBlendingFunctionOrder() {
 		return blendingFunctionOrder;
 	}
 
-	private double[] getKnots() {
+	protected double[] getKnots() {
 		return knots;
 	}
 
-	private double getStartT() {
+	protected double getStartT() {
 		return startT;
 	}
 
-	private double getEndT() {
+	protected double getEndT() {
 		return endT;
 	}
 
