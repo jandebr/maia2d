@@ -1,5 +1,6 @@
 package org.maia.graphics2d.image;
 
+import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
@@ -249,9 +250,16 @@ public class ImageUtils {
 			graphics2D.dispose();
 		} else {
 			int rgb = color.getRGB();
-			for (int yi = y; yi < y + height; yi++) {
-				for (int xi = x; xi < x + width; xi++) {
-					image.setRGB(xi, yi, rgb);
+			if (rgb == 0) {
+				Graphics2D graphics2D = image.createGraphics();
+				graphics2D.setComposite(AlphaComposite.Clear);
+				graphics2D.fillRect(x, y, width, height);
+				graphics2D.dispose();
+			} else {
+				for (int yi = y; yi < y + height; yi++) {
+					for (int xi = x; xi < x + width; xi++) {
+						image.setRGB(xi, yi, rgb);
+					}
 				}
 			}
 		}
