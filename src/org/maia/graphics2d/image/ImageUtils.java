@@ -125,8 +125,8 @@ public class ImageUtils {
 	}
 
 	public static BufferedImage scale(BufferedImage image, double sx, double sy) {
-		int sw = (int) Math.floor(image.getWidth() * sx);
-		int sh = (int) Math.floor(image.getHeight() * sy);
+		int sw = (int) Math.floor(getWidth(image) * sx);
+		int sh = (int) Math.floor(getHeight(image) * sy);
 		BufferedImage scaledImage = new BufferedImage(sw, sh, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D graphics2D = scaledImage.createGraphics();
 		graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
@@ -134,6 +134,31 @@ public class ImageUtils {
 		graphics2D.drawRenderedImage(image, at);
 		graphics2D.dispose();
 		return scaledImage;
+	}
+
+	public static BufferedImage pixelate(BufferedImage image, int pixelSize) {
+		return pixelate(image, pixelSize, pixelSize);
+	}
+
+	public static BufferedImage pixelate(BufferedImage image, int pixelWidth, int pixelHeight) {
+		if (pixelWidth <= 0)
+			throw new IllegalArgumentException("The pixelWidth must be strictly positive (" + pixelWidth + ")");
+		if (pixelHeight <= 0)
+			throw new IllegalArgumentException("The pixelHeight must be strictly positive (" + pixelHeight + ")");
+		if (pixelWidth == 1 && pixelHeight == 1) {
+			return image;
+		} else {
+			int width = getWidth(image);
+			int height = getHeight(image);
+			BufferedImage scaledImage = scale(image, 1.0 / pixelWidth, 1.0 / pixelHeight);
+			BufferedImage pixelatedImage = createImage(width, height);
+			Graphics2D graphics2D = pixelatedImage.createGraphics();
+			graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+					RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+			graphics2D.drawImage(scaledImage, 0, 0, width, height, null);
+			graphics2D.dispose();
+			return pixelatedImage;
+		}
 	}
 
 	public static BufferedImage convertToBufferedImage(Image image) {
